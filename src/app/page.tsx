@@ -201,8 +201,8 @@ export default function Page() {
               <h1 className="font-fraunces flex flex-col gap-1 text-[clamp(3.1rem,8vw,6.9rem)] font-medium leading-[0.92] tracking-[-0.05em]">
                 <span>Gemorroyga</span>
                 <span className="italic text-accent">qarshi.</span>
-                <span>Tabiiydan</span>
-                <span className="italic">kelgan shifo.</span>
+                <span>Tabiiy</span>
+                <span className="italic">shifo vositasi.</span>
               </h1>
             </div>
 
@@ -327,7 +327,7 @@ export default function Page() {
       </section>
 
       {/* ============ § 02 — TARKIB ============ */}
-      <section id="tarkib" className="py-24 max-md:py-[78px]">
+      {/* <section id="tarkib" className="py-24 max-md:py-[78px]">
         <div className="container-custom">
           <div
             className="mb-[44px] grid items-end gap-9 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]"
@@ -365,7 +365,7 @@ export default function Page() {
             />
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ============ § 03 — BUYURTMA ============ */}
       <section id="buyurtma" className="pb-24 pt-[90px] max-md:py-[78px]">
@@ -393,7 +393,7 @@ export default function Page() {
 
           <div className="grid gap-5 lg:grid-cols-2" data-reveal>
             {/* Aloqa kartochkasi */}
-            <div className="editorial-card p-7 max-sm:rounded-[22px] max-sm:px-[18px] max-sm:py-[22px]">
+            {/* <div className="editorial-card p-7 max-sm:rounded-[22px] max-sm:px-[18px] max-sm:py-[22px]">
               <div className="mini-kicker mb-4">Aloqa</div>
               <h3 className="font-fraunces mb-[14px] text-[clamp(1.45rem,2.6vw,2rem)] font-medium leading-[1.08] tracking-[-0.03em]">
                 Tezkor bog&apos;lanish
@@ -431,7 +431,7 @@ export default function Page() {
                   <span>Ma&apos;lumotlaringiz xavfsiz</span>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Forma */}
             <div className="editorial-card p-7 max-sm:rounded-[22px] max-sm:px-[18px] max-sm:py-[22px]">
