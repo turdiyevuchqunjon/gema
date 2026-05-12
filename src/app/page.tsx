@@ -176,7 +176,7 @@ export default function Page() {
               href="#buyurtma"
               className="primary-btn !min-w-0 !min-h-0 !py-3 !px-5 !text-[11px]"
             >
-              <span>Ma'lumot uchun</span>
+              <span>Ma'lumot qoldiring</span>
               <span className="arrow">→</span>
             </a>
           </nav>
@@ -215,7 +215,7 @@ export default function Page() {
               </p>
 
    <a href="#buyurtma" className="primary-btn max-sm:w-full">
-                  <span>Batafsil ma'lumot uchun</span>
+                  <span>Ma'lumot qoldiring</span>
                   <span className="arrow">→</span>
                 </a>
 
