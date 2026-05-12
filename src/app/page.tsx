@@ -176,7 +176,7 @@ export default function Page() {
               href="#buyurtma"
               className="primary-btn !min-w-0 !min-h-0 !py-3 !px-5 !text-[11px]"
             >
-              <span>Buyurtma</span>
+              <span>Ma'lumot uchun</span>
               <span className="arrow">→</span>
             </a>
           </nav>
@@ -214,7 +214,12 @@ export default function Page() {
                 yetkazib beriladi.
               </p>
 
-              <div className="mb-[34px] grid gap-[18px] md:grid-cols-3 max-md:grid-cols-1">
+   <a href="#buyurtma" className="primary-btn max-sm:w-full">
+                  <span>Batafsil ma'lumot uchun</span>
+                  <span className="arrow">→</span>
+                </a>
+
+              <div className="mb-[34px] pt-8 grid gap-[18px] md:grid-cols-3 max-md:grid-cols-1">
                 <div className="border-t border-line pt-[14px]">
                   <div className="font-fraunces text-[clamp(2rem,4vw,3.1rem)] leading-none tracking-[-0.04em]">
                     100<span className="italic text-accent">%</span>
@@ -244,10 +249,6 @@ export default function Page() {
               </div>
 
               <div className="flex flex-wrap items-center gap-[18px] max-sm:flex-col max-sm:items-start">
-                <a href="#buyurtma" className="primary-btn max-sm:w-full">
-                  <span>Buyurtma berish</span>
-                  <span className="arrow">→</span>
-                </a>
 
                 <a
                   href="tel:+998785550307"
