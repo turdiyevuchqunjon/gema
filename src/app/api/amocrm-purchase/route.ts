@@ -69,35 +69,53 @@ export async function POST(req: NextRequest) {
     }
 
     const SOLD_STATUS_ID = process.env.AMOCRM_SOLD_STATUS_ID;
+    const HIGH_QUALITY_STATUS_ID = process.env.AMOCRM_HIGH_QUALITY_STATUS_ID;
     const results: any[] = [];
 
     for (const ev of events) {
       if (!ev.leadId) continue;
 
-      // Faqat SOTILDI bosqichini qabul qilamiz
-      if (SOLD_STATUS_ID && ev.statusId !== SOLD_STATUS_ID) {
+      const isSold = SOLD_STATUS_ID && ev.statusId === SOLD_STATUS_ID;
+      const isHighQuality = HIGH_QUALITY_STATUS_ID && ev.statusId === HIGH_QUALITY_STATUS_ID;
+
+      if (!isSold && !isHighQuality) {
         console.log(
-          `[AMO PURCHASE] Lid ${ev.leadId} bosqichi ${ev.statusId} - SOTILDI emas, o'tkazib yuborildi`
+          `[AMO WEBHOOK] Lid ${ev.leadId} bosqichi ${ev.statusId} - qayta ishlanmaydi`
         );
         continue;
       }
 
       const leadInfo = await fetchLeadDetails(ev.leadId);
       if (!leadInfo) {
-        console.error(`[AMO PURCHASE] Lid ${ev.leadId} topilmadi`);
+        console.error(`[AMO WEBHOOK] Lid ${ev.leadId} topilmadi`);
         continue;
       }
 
-      const result = await sendPurchaseToMeta({
-        phone: leadInfo.phone,
-        name: leadInfo.name,
-        fbp: leadInfo.fbp,
-        fbc: leadInfo.fbc,
-        price: parseFloat(ev.price) || leadInfo.price || 0,
-        leadId: ev.leadId,
-      });
+      if (isSold) {
+        const result = await sendPurchaseToMeta({
+          phone: leadInfo.phone,
+          name: leadInfo.name,
+          fbp: leadInfo.fbp,
+          fbc: leadInfo.fbc,
+          price: parseFloat(ev.price) || leadInfo.price || 0,
+          leadId: ev.leadId,
+          eventType: "Purchase",
+        });
+        results.push({ leadId: ev.leadId, type: "Purchase", meta: result });
+      }
 
-      results.push({ leadId: ev.leadId, meta: result });
+      if (isHighQuality) {
+        const result = await sendPurchaseToMeta({
+          phone: leadInfo.phone,
+          name: leadInfo.name,
+          fbp: leadInfo.fbp,
+          fbc: leadInfo.fbc,
+          price: parseFloat(ev.price) || leadInfo.price || 0,
+          leadId: ev.leadId,
+          eventType: "HighQualityLead",
+        });
+        results.push({ leadId: ev.leadId, type: "HighQualityLead", meta: result });
+      }
     }
 
     return NextResponse.json({ ok: true, processed: results });
@@ -177,7 +195,7 @@ async function fetchLeadDetails(leadId: string) {
   }
 }
 
-/* Meta CAPI ga Purchase event yuborish */
+/* Meta CAPI ga event yuborish (Purchase yoki HighQualityLead) */
 async function sendPurchaseToMeta(data: {
   phone: string;
   name: string;
@@ -185,12 +203,13 @@ async function sendPurchaseToMeta(data: {
   fbc: string;
   price: number;
   leadId: string;
+  eventType: "Purchase" | "HighQualityLead";
 }) {
   const PIXEL_ID = process.env.META_PIXEL_ID;
   const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
 
   if (!PIXEL_ID || !ACCESS_TOKEN) {
-    console.warn("[META PURCHASE] credentials yo'q");
+    console.warn("[META EVENT] credentials yo'q");
     return { skipped: true };
   }
 
@@ -205,11 +224,13 @@ async function sendPurchaseToMeta(data: {
   const firstName = nameParts[0] || "";
   const lastName = nameParts.slice(1).join(" ") || "";
 
+  const eventPrefix = data.eventType === "HighQualityLead" ? "hqlead" : "purchase";
+
   const payload = {
     data: [
       {
-        event_id: `purchase_lead_${data.leadId}`,
-        event_name: "Purchase",
+        event_id: `${eventPrefix}_lead_${data.leadId}`,
+        event_name: data.eventType,
         event_time: Math.floor(Date.now() / 1000),
         event_source_url:
           process.env.NEXT_PUBLIC_SITE_URL || "https://hemmort.uz",
@@ -224,6 +245,9 @@ async function sendPurchaseToMeta(data: {
         custom_data: {
           currency: "UZS",
           value: data.price,
+          content_name: data.eventType === "HighQualityLead"
+            ? "Yuqori sifatli lid"
+            : "Sotildi",
         },
       },
     ],
@@ -244,15 +268,15 @@ async function sendPurchaseToMeta(data: {
 
     const result = await res.json();
     if (!res.ok) {
-      console.error("[META PURCHASE ERROR]", result);
+      console.error(`[META ${data.eventType} ERROR]`, result);
       return { error: result };
     }
     console.log(
-      `[META PURCHASE] Lid ${data.leadId} - Purchase yuborildi! Summa: ${data.price} UZS`
+      `[META ${data.eventType}] Lid ${data.leadId} - yuborildi! Summa: ${data.price} UZS`
     );
     return result;
   } catch (err: any) {
-    console.error("[META PURCHASE EXCEPTION]", err);
+    console.error(`[META ${data.eventType} EXCEPTION]`, err);
     return { error: err.message };
   }
 }
