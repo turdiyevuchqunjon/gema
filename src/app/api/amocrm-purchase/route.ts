@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { phoneForHash } from "@/lib/phone";
 
 /**
  * POST /api/amocrm-purchase
@@ -219,7 +220,8 @@ async function sendPurchaseToMeta(data: {
       .update(value.toLowerCase().trim())
       .digest("hex");
 
-  const normalizedPhone = data.phone.replace(/[\s\-\(\)\+]/g, "");
+  // Lead event bilan bir xil formatda hash qilish uchun (moslik sifati uchun muhim)
+  const normalizedPhone = phoneForHash(data.phone);
   const nameParts = data.name.trim().split(/\s+/);
   const firstName = nameParts[0] || "";
   const lastName = nameParts.slice(1).join(" ") || "";

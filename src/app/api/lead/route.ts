@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { normalizePhone, phoneForHash, samePhone } from "@/lib/phone";
 
 /**
  * POST /api/lead
@@ -22,11 +23,21 @@ interface LeadPayload {
 export async function POST(req: NextRequest) {
   try {
     const body: LeadPayload = await req.json();
-    const { name, phone, address, fbp, fbc, userAgent, pageUrl } = body;
+    const { name, address, fbp, fbc, userAgent, pageUrl } = body;
 
-    if (!name?.trim() || !phone?.trim()) {
+    if (!name?.trim() || !body.phone?.trim()) {
       return NextResponse.json(
         { error: "Ism va telefon majburiy" },
+        { status: 400 }
+      );
+    }
+
+    // Telefon raqamni yagona formatga keltirish: +998XXXXXXXXX
+    // Bir maydonga bir nechta raqam yozilgan yoki noto'g'ri bo'lsa — rad etamiz.
+    const phone = normalizePhone(body.phone);
+    if (!phone) {
+      return NextResponse.json(
+        { error: "Telefon raqam noto'g'ri. Namuna: +998 90 123 45 67" },
         { status: 400 }
       );
     }
@@ -95,7 +106,7 @@ async function sendToMetaCAPI(data: {
       .update(value.toLowerCase().trim())
       .digest("hex");
 
-  const normalizedPhone = data.phone.replace(/[\s\-\(\)\+]/g, "");
+  const normalizedPhone = phoneForHash(data.phone);
   const nameParts = data.name.trim().split(/\s+/);
   const firstName = nameParts[0] || "";
   const lastName = nameParts.slice(1).join(" ") || "";
@@ -175,15 +186,26 @@ async function createAmoCRMLead(data: {
   // 1) Mavjud kontaktni qidirish (telefon bo'yicha)
   try {
     const searchRes = await fetch(
-      `${baseUrl}/api/v4/contacts?query=${encodeURIComponent(data.phone)}`,
+      `${baseUrl}/api/v4/contacts?query=${encodeURIComponent(data.phone)}&limit=10`,
       { headers }
     );
     if (searchRes.ok) {
       const searchData = await searchRes.json();
-      const existing = searchData?._embedded?.contacts?.[0];
+      const candidates: any[] = searchData?._embedded?.contacts || [];
+      // AmoCRM "query" — bu loose (qismiy) qidiruv va noto'g'ri kontaktni ham
+      // qaytarishi mumkin. Shuning uchun faqat telefoni HAQIQATAN mos keladigan
+      // kontaktni tanlaymiz — aks holda lid boshqa odamning kontaktiga ulanib,
+      // bitta lidda 2-3 raqam paydo bo'ladi.
+      const existing = candidates.find((c) =>
+        (c.custom_fields_values || []).some(
+          (f: any) =>
+            f.field_code === "PHONE" &&
+            (f.values || []).some((v: any) => samePhone(v?.value, data.phone))
+        )
+      );
       if (existing) {
         contactId = existing.id;
-        console.log("[AMOCRM] Mavjud kontakt topildi:", contactId);
+        console.log("[AMOCRM] Mavjud kontakt topildi (telefon mos):", contactId);
 
         // Mavjud kontaktda FBP/FBC ni yangilash
         if (FIELD_FBP || FIELD_FBC) {
@@ -208,6 +230,10 @@ async function createAmoCRMLead(data: {
             });
           }
         }
+      } else if (candidates.length > 0) {
+        console.log(
+          "[AMOCRM] Qidiruv natija berdi, lekin telefon mos emas — yangi kontakt yaratiladi"
+        );
       }
     }
   } catch (err) {
@@ -256,7 +282,22 @@ async function createAmoCRMLead(data: {
     }
   }
 
-  // 3) Lid yaratish
+  // 3) Lid yaratish.
+  // Kontakt topilmagan/yaratilmagan bo'lsa ham, lid telefonsiz qolmasligi uchun
+  // yangi kontaktni lid ichida embed qilamiz (Purchase webhook telefonga tayanadi).
+  const fallbackContact = {
+    name: data.name,
+    custom_fields_values: [
+      { field_code: "PHONE", values: [{ value: data.phone, enum_code: "WORK" }] },
+      ...(FIELD_FBP && data.fbp
+        ? [{ field_id: parseInt(FIELD_FBP), values: [{ value: data.fbp }] }]
+        : []),
+      ...(FIELD_FBC && data.fbc
+        ? [{ field_id: parseInt(FIELD_FBC), values: [{ value: data.fbc }] }]
+        : []),
+    ],
+  };
+
   const leadPayload: any[] = [
     {
       name: `Hemmort — ${data.name}`,
@@ -266,9 +307,9 @@ async function createAmoCRMLead(data: {
       ...(process.env.AMOCRM_STATUS_ID
         ? { status_id: parseInt(process.env.AMOCRM_STATUS_ID) }
         : {}),
-      ...(contactId
-        ? { _embedded: { contacts: [{ id: contactId }] } }
-        : {}),
+      _embedded: {
+        contacts: [contactId ? { id: contactId } : fallbackContact],
+      },
     },
   ];
 

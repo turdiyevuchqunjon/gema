@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { normalizePhone } from "@/lib/phone";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -121,14 +122,25 @@ export default function Page() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus("loading");
     setErrorMsg("");
+
+    // Telefonni yagona formatga keltirish. Bir maydonga 2 ta raqam yozilgan yoki
+    // noto'g'ri bo'lsa — serverga yubormaymiz (AmoCRM'da 2-3 raqamli lid oldini olish).
+    const normalizedPhone = normalizePhone(form.phone);
+    if (!normalizedPhone) {
+      setStatus("error");
+      setErrorMsg("Telefon raqamni to'g'ri kiriting. Namuna: +998 90 123 45 67");
+      return;
+    }
+
+    setStatus("loading");
     try {
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          phone: normalizedPhone,
           fbp: getCookie("_fbp"),
           fbc: getCookie("_fbc"),
           userAgent: navigator.userAgent,
