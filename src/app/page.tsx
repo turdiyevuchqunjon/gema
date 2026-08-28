@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { normalizePhone } from "@/lib/phone";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -47,6 +47,70 @@ const suppHerbs = [
   { name: "Qichitqi o't", latin: "Urtica dioica", use: "qonni to'xtatadi" },
   { name: "Chakanda", latin: "Hippophae rhamnoides", use: "tez tiklaydi" },
 ];
+
+const reviews = [
+  { src: "/reviews/review-1.mp4", poster: "/reviews/review-1.png", quote: "2 yildan beri gemorroy azob berardi — Hemmort'dan keyin muammo yo'q." },
+  { src: "/reviews/review-2.mp4", poster: "/reviews/review-2.png", quote: "Operatsiyadan qo'rqardim. Tabiiy yo'l bilan tuzaldim." },
+  { src: "/reviews/review-3.mp4", poster: "/reviews/review-3.png", quote: "Menga holatimga qarab tavsiya berishdi, natija bo'ldi." },
+  { src: "/reviews/review-4.mp4", poster: "/reviews/review-4.png", quote: "Og'aynimga ham tavsiya qildim — u ham minnatdor." },
+  { src: "/reviews/review-5.mp4", poster: "/reviews/review-5.png", quote: "Og'ir ko'targanda qiynalardim, endi yengil." },
+];
+
+function ReviewCard({ src, poster, quote }: { src: string; poster: string; quote: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const handlePlay = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    // Boshqa barcha otziv videolarini to'xtatish
+    document
+      .querySelectorAll<HTMLVideoElement>("video[data-review]")
+      .forEach((v) => {
+        if (v !== el) {
+          v.pause();
+        }
+      });
+    el.play();
+  };
+
+  return (
+    <figure className="editorial-card overflow-hidden !rounded-[22px] p-0">
+      <div className="relative aspect-[9/16] bg-ink">
+        <video
+          ref={videoRef}
+          data-review
+          src={src}
+          poster={poster}
+          playsInline
+          preload="none"
+          controls={playing}
+          className="h-full w-full object-cover"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+        />
+        {!playing && (
+          <button
+            type="button"
+            onClick={handlePlay}
+            aria-label="Videoni ko'rish"
+            className="group absolute inset-0 flex items-center justify-center bg-[rgba(14,26,36,0.28)] transition hover:bg-[rgba(14,26,36,0.14)]"
+          >
+            <span className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-[rgba(248,245,239,0.94)] shadow-[0_12px_40px_-8px_rgba(14,26,36,0.5)] transition group-hover:scale-105">
+              <svg viewBox="0 0 24 24" className="ml-1 h-6 w-6 fill-ink">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </button>
+        )}
+      </div>
+      <figcaption className="border-t border-line px-5 py-4 text-[14px] leading-[1.6] text-muted">
+        “{quote}”
+      </figcaption>
+    </figure>
+  );
+}
 
 type HerbItem = { name: string; latin: string; use: string };
 
@@ -181,8 +245,8 @@ export default function Page() {
             <a href="#foyda" className="text-sm text-muted transition hover:text-ink">
               Foyda
             </a>
-            <a href="#tarkib" className="text-sm text-muted transition hover:text-ink">
-              Tarkib
+            <a href="#otzivlar" className="text-sm text-muted transition hover:text-ink max-sm:hidden">
+              Otzivlar
             </a>
             <a
               href="#buyurtma"
@@ -339,7 +403,82 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============ § 02 — TARKIB ============ */}
+      {/* ============ § 02 — ASOSIY TAKLIF ============ */}
+      <section id="taklif" className="py-24 max-md:py-[78px]">
+        <div className="container-custom">
+          <div className="editorial-card p-10 max-sm:p-[26px]" data-reveal>
+            <div className="section-kicker">§ 02 — Asosiy taklif</div>
+            <h2 className="font-fraunces mt-[14px] max-w-[900px] text-[clamp(1.9rem,4vw,3.4rem)] font-medium leading-[1.08] tracking-[-0.03em]">
+              Mahsulotimizni olganingizdan so&apos;ng, doimiy ravishda bizning{" "}
+              <span className="italic text-accent">
+                mutaxassislarimizning onlayn nazorati ostida
+              </span>{" "}
+              bo&apos;lasiz.
+            </h2>
+            <p className="mt-6 max-w-[620px] text-[15px] leading-[1.85] text-muted">
+              Buyurtmadan keyin ham yolg&apos;iz qolmaysiz. Mutaxassisimiz siz
+              bilan bog&apos;lanib turadi, qabul qilish tartibini nazorat qiladi
+              va har bir savolingizga javob beradi — to&apos;liq natijaga
+              erishguningizcha.
+            </p>
+
+            <div className="mt-9 grid gap-[18px] border-t border-line pt-8 md:grid-cols-3 max-md:grid-cols-1">
+              {[
+                "Bepul yetkazib berish — O'zbekiston bo'ylab",
+                "To'lov — mahsulotni qabul qilganingizdan keyin",
+                "24/7 online konsultatsiya va nazorat",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3 text-[14px] leading-[1.6] text-ink">
+                  <span className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <a href="#buyurtma" className="primary-btn mt-9 max-sm:w-full">
+              <span>Ariza qoldirish</span>
+              <span className="arrow">→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ § 03 — MIJOZLAR FIKRI (OTZIVLAR) ============ */}
+      <section id="otzivlar" className="py-24 max-md:py-[78px]">
+        <div className="container-custom">
+          <div
+            className="mb-[44px] grid items-end gap-9 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]"
+            data-reveal
+          >
+            <div>
+              <div className="section-kicker">§ 03 — Mijozlar fikri</div>
+              <h2 className="font-fraunces mt-[14px] text-[clamp(2.4rem,5vw,4.6rem)] font-medium leading-[0.96] tracking-[-0.04em]">
+                Ular sinab ko&apos;rdi.
+                <br />
+                <span className="italic text-accent">Natijasini aytdi.</span>
+              </h2>
+            </div>
+
+            <div>
+              <p className="max-w-[520px] text-[15px] leading-[1.8] text-muted">
+                Hemmort&apos;dan foydalangan mijozlarimizning haqiqiy video
+                fikrlari. Videoni ko&apos;rish uchun play tugmasini bosing.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 max-sm:grid-cols-1"
+            data-reveal
+          >
+            {reviews.map((r) => (
+              <ReviewCard key={r.src} {...r} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TARKIB (yashirin) ============ */}
       {/* <section id="tarkib" className="py-24 max-md:py-[78px]">
         <div className="container-custom">
           <div
@@ -388,7 +527,7 @@ export default function Page() {
             data-reveal
           >
             <div>
-              <div className="section-kicker">§ 03 — Buyurtma</div>
+              <div className="section-kicker">§ 04 — Buyurtma</div>
               <h2 className="font-fraunces mt-[14px] text-[clamp(2.4rem,5vw,4.6rem)] font-medium leading-[0.96] tracking-[-0.04em]">
                 Ma&apos;lumotlaringizni
                 <br />
@@ -636,8 +775,8 @@ export default function Page() {
               <a href="#foyda" className="hover:text-white transition">
                 Foyda
               </a>
-              <a href="#tarkib" className="hover:text-white transition">
-                Tarkib
+              <a href="#otzivlar" className="hover:text-white transition">
+                Otzivlar
               </a>
               <a href="#buyurtma" className="hover:text-white transition">
                 Buyurtma

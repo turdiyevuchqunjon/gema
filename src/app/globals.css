@@ -16,10 +16,19 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   background: var(--bg);
   color: var(--text);
+}
+
+/* Sticky header ostiga sakrab tushmasligi uchun */
+section[id] {
+  scroll-margin-top: 96px;
 }
 
 body {
